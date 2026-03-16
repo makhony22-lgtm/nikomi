@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тест Firebase</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto; }
+  .status { padding: 15px; margin: 10px 0; border-radius: 8px; }
+  .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+  .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+  button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+  pre { background: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<h1>🔥 Тест подключения Firebase</h1>
+
+<div id="status"></div>
+
+<h3>Тесты (запускай по порядку!):</h3>
+<button onclick="testAuth()">1. Проверить Authentication</button>
+<button onclick="testRegister()">2. Тестовая регистрация</button>
+<button onclick="testFirestore()">3. Проверить Firestore</button>
+<button onclick="testLogout()">4. Выйти</button>
+
+<div id="logs"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDyPmcU4gYJPNp9N-xN1KHxXR9bPsn-x2I",
+    authDomain: "nikomi-a7429.firebaseapp.com",
+    projectId: "nikomi-a7429",
+    storageBucket: "nikomi-a7429.firebasestorage.app",
+    messagingSenderId: "845534967375",
+    appId: "1:845534967375:web:cf9085ce87c71d4d5d1c3a",
+    measurementId: "G-GWMMF7896E"
+  };
+
+  let app, auth, db;
+
+  function log(message, type = 'info') {
+    const div = document.createElement('div');
+    div.className = `status ${type}`;
+    div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+    document.getElementById('logs').appendChild(div);
+    console.log(message);
+  }
+
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    log('✅ Firebase инициализирован успешно!', 'success');
+    document.getElementById('status').innerHTML = '<div class="status success">✅ Firebase подключен</div>';
+  } catch (err) {
+    log('❌ Ошибка инициализации Firebase: ' + err.message, 'error');
+    document.getElementById('status').innerHTML = '<div class="status error">❌ Ошибка подключения к Firebase</div>';
+  }
+
+  window.testAuth = async function() {
+    log('🔐 Проверка Authentication...', 'info');
+    try {
+      log('Auth объект: ' + (auth ? 'OK' : 'НЕТ'), auth ? 'success' : 'error');
+      log('Current user: ' + (auth.currentUser ? auth.currentUser.email : 'не авторизован'), 'info');
+    } catch (err) {
+      log('❌ Ошибка: ' + err.message, 'error');
+    }
+  };
+
+  window.testFirestore = async function() {
+    log('📦 Проверка Firestore...', 'info');
+    
+    // Проверка авторизации
+    if (!auth.currentUser) {
+      log('⚠️ Нужна авторизация! Сначала запусти "3. Тестовая регистрация"', 'error');
+      return;
+    }
+    
+    try {
+      log('Firestore объект: ' + (db ? 'OK' : 'НЕТ'), db ? 'success' : 'error');
+      log('Текущий пользователь: ' + auth.currentUser.email, 'info');
+      
+      // Попытка записи тестовых данных
+      log('Попытка записи тестовых данных...', 'info');
+      const testData = {
+        test: true,
+        message: 'Тестовая запись',
+        userId: auth.currentUser.uid,
+        timestamp: serverTimestamp()
+      };
+      const docRef = await addDoc(collection(db, 'test'), testData);
+      log('✅ Запись успешна! ID: ' + docRef.id, 'success');
+      
+      // Попытка чтения
+      log('Попытка чтения данных...', 'info');
+      const snapshot = await getDocs(collection(db, 'test'));
+      log('✅ Прочитано записей: ' + snapshot.size, 'success');
+      
+    } catch (err) {
+      log('❌ Ошибка Firestore: ' + err.message, 'error');
+      log('Код ошибки: ' + err.code, 'error');
+      
+      if (err.code === 'permission-denied') {
+        log('⚠️ ПРОБЛЕМА: Правила Firestore запрещают доступ', 'error');
+        log('📝 Решение: Зайди в Firebase Console → Firestore Database → Rules', 'info');
+        log('📝 И установи правила:', 'info');
+        log('<pre>rules_version = \'2\';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if request.auth != null;\n    }\n  }\n}</pre>', 'info');
+      }
+    }
+  };
+
+  window.testRegister = async function() {
+    const testEmail = 'test' + Date.now() + '@test.com';
+    const testPassword = 'test123456';
+    
+    log('👤 Тестовая регистрация...', 'info');
+    log('Email: ' + testEmail, 'info');
+    log('Password: ' + testPassword, 'info');
+    
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, testEmail, testPassword);
+      log('✅ Регистрация успешна! UID: ' + cred.user.uid, 'success');
+      log('✅ Email: ' + cred.user.email, 'success');
+      log('✅ Теперь можешь тестировать Firestore (кнопка 3)', 'success');
+      
+    } catch (err) {
+      log('❌ Ошибка регистрации: ' + err.message, 'error');
+      log('Код ошибки: ' + err.code, 'error');
+      
+      if (err.code === 'auth/operation-not-allowed') {
+        log('⚠️ ПРОБЛЕМА: Email/Password авторизация не включена', 'error');
+        log('📝 Решение: Firebase Console → Authentication → Sign-in method → Email/Password → Enable', 'info');
+      }
+    }
+  };
+  
+  window.testLogout = async function() {
+    try {
+      await signOut(auth);
+      log('✅ Выход выполнен', 'success');
+    } catch (err) {
+      log('❌ Ошибка выхода: ' + err.message, 'error');
+    }
+  };
+</script>
+
+</body>
+</html>

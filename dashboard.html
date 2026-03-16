@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nikomi — Мои проекты</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .page-header { 
+    display:flex; align-items:center; justify-content:space-between; 
+    margin-bottom:32px; flex-wrap:wrap; gap:16px; 
+    padding:24px; background:linear-gradient(135deg, rgba(58,176,168,0.08) 0%, rgba(58,176,168,0.02) 100%);
+    border-radius:20px; border:1px solid rgba(58,176,168,0.15);
+  }
+  .page-title { 
+    font-family:'Sora',sans-serif; font-size:28px; font-weight:700; 
+    color:var(--text); letter-spacing:-0.8px;
+    background:linear-gradient(135deg, var(--primary) 0%, #319E97 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .page-subtitle { font-size:14px; color:var(--text-secondary); margin-top:4px; font-weight:400; }
+  .toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:28px; }
+  .toolbar .search-bar { flex:1; min-width:220px; }
+  .toolbar .search-bar input { background:var(--card); border-radius:16px; }
+  .projects-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px,1fr)); gap:24px; }
+  .project-card { 
+    background:var(--card); border:1px solid var(--border); 
+    border-radius:20px; padding:26px; 
+    box-shadow:0 4px 12px rgba(0,0,0,0.06); 
+    transition:all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+    position:relative; overflow:hidden; cursor:default;
+  }
+  .project-card::before { 
+    content:''; position:absolute; top:0; left:0; 
+    width:5px; height:100%; 
+    background:linear-gradient(180deg, var(--primary) 0%, #319E97 100%); 
+    border-radius:5px 0 0 5px; 
+  }
+  .project-card.warn::before { background:linear-gradient(180deg, var(--warning) 0%, #FAD77A 100%); }
+  .project-card.danger::before { background:linear-gradient(180deg, var(--error) 0%, #EF9A9A 100%); }
+  .project-card.done::before { background:linear-gradient(180deg, var(--success) 0%, #81C784 100%); }
+  .project-card:hover { 
+    transform:translateY(-6px) scale(1.02); 
+    box-shadow:0 12px 32px rgba(58,176,168,0.15);
+    border-color:rgba(58,176,168,0.3);
+  }
+  .project-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; }
+  .project-name { 
+    font-family:'Sora',sans-serif; font-size:17px; font-weight:600; 
+    color:var(--text); line-height:1.3; 
+  }
+  .project-desc { 
+    font-size:14px; color:var(--text-secondary); line-height:1.6; 
+    margin-bottom:16px; font-weight:300; 
+    display:-webkit-box; -webkit-line-clamp:2; line-clamp:2;
+    -webkit-box-orient:vertical; overflow:hidden; 
+  }
+  .project-meta { display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+  .meta-item { 
+    display:flex; align-items:center; gap:6px; 
+    font-size:13px; color:var(--text-secondary);
+    padding:4px 10px; background:var(--bg); border-radius:12px;
+  }
+  .meta-item.deadline-soon { 
+    color:var(--warning); font-weight:500; 
+    background:rgba(248,201,93,0.12);
+  }
+  .meta-item.deadline-over { 
+    color:var(--error); font-weight:500; 
+    background:rgba(229,115,115,0.12);
+  }
+  .project-footer { 
+    display:flex; align-items:center; justify-content:space-between; 
+    margin-top:16px; padding-top:16px; 
+    border-top:1px solid var(--border); 
+  }
+  .progress-wrap { flex:1; margin-right:16px; }
+  .progress-label { 
+    display:flex; justify-content:space-between; 
+    font-size:12px; color:var(--text-secondary); 
+    margin-bottom:6px; font-weight:500;
+  }
+  .dots-btn { 
+    background:none; border:none; cursor:pointer; 
+    font-size:20px; color:var(--text-secondary); 
+    padding:6px 8px; border-radius:50%; 
+    transition:all 0.3s; line-height:1; 
+  }
+  .dots-btn:hover { 
+    background:rgba(58,176,168,0.1); 
+    color:var(--primary); 
+    transform:scale(1.1);
+  }
+  .project-card-add { 
+    background:linear-gradient(135deg, rgba(58,176,168,0.03) 0%, rgba(58,176,168,0.01) 100%); 
+    border:2px dashed rgba(58,176,168,0.3); 
+    border-radius:20px; padding:26px; 
+    display:flex; flex-direction:column; 
+    align-items:center; justify-content:center; 
+    gap:12px; cursor:pointer; min-height:220px; 
+    transition:all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+    color:var(--text-secondary); 
+    font-family:'DM Sans',sans-serif; 
+    font-size:15px; font-weight:500; 
+  }
+  .project-card-add:hover { 
+    border-color:var(--primary); 
+    color:var(--primary); 
+    background:linear-gradient(135deg, rgba(58,176,168,0.08) 0%, rgba(58,176,168,0.03) 100%);
+    transform:translateY(-4px);
+    box-shadow:0 8px 24px rgba(58,176,168,0.15);
+  }
+  .add-icon { 
+    width:52px; height:52px; 
+    border-radius:50%; 
+    border:2px dashed currentColor; 
+    display:flex; align-items:center; justify-content:center; 
+    font-size:26px; 
+    transition:all 0.3s; 
+    background:rgba(58,176,168,0.05);
+  }
+  .project-card-add:hover .add-icon { 
+    transform:scale(1.15) rotate(90deg); 
+    background:rgba(58,176,168,0.12);
+  }
+  .empty-state { text-align:center; padding:80px 20px; color:var(--text-secondary); }
+  .empty-state .empty-icon { font-size:64px; margin-bottom:20px; }
+  .empty-state h3 { font-size:20px; color:var(--text); margin-bottom:10px; font-weight:600; }
+  .empty-state p { font-size:15px; margin-bottom:24px; }
+  .deadline-alert { 
+    margin-bottom:28px; animation:fadeUp 0.5s ease both;
+    border-radius:16px; padding:18px 20px;
+  }
+  .modal-overlay { display:none; }
+  .modal-overlay.open { display:flex; }
+  .avatars { display:flex; }
+  .avatar { 
+    width:30px; height:30px; 
+    border-radius:50%; 
+    border:2px solid var(--card); 
+    margin-left:-8px; 
+    font-size:11px; font-weight:700; color:#fff; 
+    display:flex; align-items:center; justify-content:center; 
+    flex-shrink:0; 
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
+    transition:all 0.3s;
+  }
+  .avatar:first-child { margin-left:0; }
+  .avatar:hover { transform:translateY(-2px) scale(1.1); z-index:10; }
+  .notif-mascot-img { width:64px; height:64px; object-fit:contain; flex-shrink:0; }
+  @media (max-width:600px) { 
+    .projects-grid { grid-template-columns:1fr; } 
+    .page-header { flex-direction:column; align-items:flex-start; padding:20px; } 
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ САЙДБАР ══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon" style="width:32px;height:32px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+    </div>
+    Nikomi
+  </div>
+  <a href="dashboard.html" class="sidebar-item active"><span class="icon">🗂️</span> Мои проекты</a>
+  <a href="tasks.html" class="sidebar-item"><span class="icon">✅</span> Мои задачи</a>
+  <a href="profile.html" class="sidebar-item"><span class="icon">👤</span> Профиль</a>
+  <div class="sidebar-bottom">
+    <button class="theme-toggle" id="themeToggle">
+      <span id="themeIcon">🌙</span>
+      <span id="themeLabel">Тёмная тема</span>
+    </button>
+    <a href="login.html" class="sidebar-item" style="margin-top:4px;"><span class="icon">🚪</span> Выйти</a>
+  </div>
+</aside>
+
+<!-- ══ ОСНОВНОЙ КОНТЕНТ ══ -->
+<main class="main-content">
+
+  <!-- Уведомления с персонажем (динамические) -->
+  <div id="alertsContainer"></div>
+
+  <!-- Заголовок -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">📂 Мои проекты</div>
+      <div class="page-subtitle" id="projectStats">Загрузка...</div>
+    </div>
+    <button class="btn-primary" onclick="openModal()">
+      <span style="font-size:18px;">+</span> Создать проект
+    </button>
+  </div>
+
+  <!-- Тулбар -->
+  <div class="toolbar">
+    <div class="search-bar" style="flex:1;min-width:220px;position:relative;">
+      <span class="search-icon" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text-secondary);">🔍</span>
+      <input type="text" class="form-input" id="searchInput" placeholder="Поиск проектов..." oninput="filterProjects()" style="padding-left:42px;">
+    </div>
+    <select class="form-input" id="filterStatus" onchange="filterProjects()" style="width:auto;padding:11px 16px;border-radius:16px;">
+      <option value="all">📋 Все статусы</option>
+      <option value="active">⚡ Активные</option>
+      <option value="done">✅ Завершённые</option>
+      <option value="overdue">⚠️ Просроченные</option>
+    </select>
+  </div>
+
+  <!-- Сетка проектов -->
+  <div class="projects-grid" id="projectsGrid">
+    <button class="project-card-add" onclick="openModal()" id="addCard">
+      <div class="add-icon">+</div>
+      Создать новый проект
+    </button>
+  </div>
+
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="empty-icon">
+      <img src="pers/shok.png" alt="" style="width:100px;height:100px;object-fit:contain;">
+    </div>
+    <h3>Проекты не найдены 🔍</h3>
+    <p>Попробуй изменить фильтр или поисковый запрос</p>
+    <button class="btn-primary" onclick="resetFilter()">Сбросить фильтр</button>
+  </div>
+
+</main>
+
+<!-- ══ МОДАЛКА: СОЗДАТЬ ПРОЕКТ ══ -->
+<div class="modal-overlay" id="createModal" onclick="closeModalOutside(event)">
+  <div class="modal animate-scaleIn">
+    <div class="modal-header">
+      <div class="modal-title">✨ Новый проект</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label for="newProjectName">Название проекта</label>
+      <input type="text" id="newProjectName" class="form-input" placeholder="Например: Дипломный проект">
+      <div class="form-error" id="nameError" style="display:none;">⚠ Введите название</div>
+    </div>
+    <div class="form-group">
+      <label for="newProjectDesc">Описание</label>
+      <textarea id="newProjectDesc" class="form-textarea" placeholder="Краткое описание проекта..." rows="3"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="newProjectDeadline">Срок выполнения</label>
+      <input type="date" id="newProjectDeadline" class="form-input">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal()">Отмена</button>
+      <button class="btn-primary" onclick="createProject()">✓ Создать проект</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Тема ──
+  if (localStorage.getItem('nikomi-theme') === 'dark') {
+    document.body.classList.add('dark');
+    document.getElementById('themeIcon').textContent  = '☀️';
+    document.getElementById('themeLabel').textContent = 'Светлая тема';
+  }
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark');
+    document.getElementById('themeIcon').textContent  = isDark ? '☀️' : '🌙';
+    document.getElementById('themeLabel').textContent = isDark ? 'Светлая тема' : 'Тёмная тема';
+    localStorage.setItem('nikomi-theme', isDark ? 'dark' : 'light');
+  });
+
+  // ── Дропдаун ──
+  function toggleDropdown(btn) {
+    const menu = btn.nextElementSibling;
+    const isOpen = menu.style.display === 'block';
+    document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+    menu.style.display = isOpen ? 'none' : 'block';
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.dropdown'))
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+  });
+
+  // ── Удалить проект ──
+  async function deleteProject(item) {
+    const card = item.closest('.project-card');
+    const projectId = card.dataset.projectId;
+    if (!confirm('Удалить проект? Это действие нельзя отменить.')) return;
+    try {
+      await window.firestoreAPI.deleteProject(projectId);
+      card.style.transition = 'opacity 0.3s, transform 0.3s';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.95)';
+      setTimeout(() => { card.remove(); checkEmpty(); updateStats(); }, 300);
+    } catch (err) {
+      alert('Ошибка при удалении проекта: ' + err.message);
+    }
+  }
+
+  let editingProjectId = null;
+  function openEditModal(projectId) {
+    editingProjectId = projectId;
+    const card = document.querySelector(`[data-project-id="${projectId}"]`);
+    if (!card) return;
+    document.getElementById('newProjectName').value = card.querySelector('.project-name').textContent.trim().replace(/^[^\s]+\s/, '');
+    document.getElementById('newProjectDesc').value = card.querySelector('.project-desc')?.textContent.trim() || '';
+    const deadlineText = card.querySelector('.meta-item:nth-child(2)')?.textContent || '';
+    openModal();
+  }
+
+  // ── Поиск и фильтр ──
+  function filterProjects() {
+    const query  = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.getElementById('filterStatus').value;
+    const cards  = document.querySelectorAll('.project-card[data-status]');
+    let visible  = 0;
+    cards.forEach(card => {
+      const match = card.dataset.name.toLowerCase().includes(query) &&
+        (status === 'all' || card.dataset.status === status);
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    document.getElementById('addCard').style.display = '';
+    document.getElementById('emptyState').style.display  = visible === 0 ? 'block' : 'none';
+    document.getElementById('projectsGrid').style.display = visible === 0 ? 'none' : 'grid';
+  }
+  function resetFilter() {
+    document.getElementById('searchInput').value  = '';
+    document.getElementById('filterStatus').value = 'all';
+    filterProjects();
+  }
+  function checkEmpty() {
+    const visible = document.querySelectorAll('.project-card[data-status]:not([style*="display: none"])').length;
+    if (visible === 0) {
+      document.getElementById('emptyState').style.display  = 'block';
+      document.getElementById('projectsGrid').style.display = 'none';
+    }
+  }
+
+  // ── Модалка создания ──
+  function openModal() {
+    document.getElementById('createModal').classList.add('open');
+    setTimeout(() => document.getElementById('newProjectName').focus(), 100);
+  }
+  function closeModal() {
+    document.getElementById('createModal').classList.remove('open');
+    document.getElementById('newProjectName').value = '';
+    document.getElementById('newProjectDesc').value = '';
+    document.getElementById('newProjectDeadline').value = '';
+    document.getElementById('nameError').style.display = 'none';
+    editingProjectId = null;
+  }
+  function closeModalOutside(e) {
+    if (e.target === document.getElementById('createModal')) closeModal();
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  async function createProject() {
+    const name     = document.getElementById('newProjectName').value.trim();
+    const desc     = document.getElementById('newProjectDesc').value.trim();
+    const deadline = document.getElementById('newProjectDeadline').value;
+    if (!name) {
+      document.getElementById('newProjectName').classList.add('error');
+      document.getElementById('nameError').style.display = 'flex';
+      return;
+    }
+    try {
+      if (editingProjectId) {
+        await window.firestoreAPI.updateProject(editingProjectId, { name, description: desc, deadline: deadline || null });
+        closeModal();
+        loadProjects();
+      } else {
+        await window.firestoreAPI.createProject({ name, description: desc, deadline: deadline || null });
+        closeModal();
+        loadProjects();
+      }
+    } catch (err) {
+      alert('Ошибка при сохранении проекта: ' + err.message);
+    }
+  }
+
+  function updateStats() {
+    const cards = document.querySelectorAll('.project-card[data-status]');
+    const total = cards.length;
+    const active = document.querySelectorAll('.project-card[data-status="active"]').length;
+    const overdue = document.querySelectorAll('.project-card[data-status="overdue"]').length;
+    document.getElementById('projectStats').textContent = 
+      `${total} ${total === 1 ? 'проект' : total < 5 ? 'проекта' : 'проектов'} · ${active} ${active === 1 ? 'активный' : 'активных'} · ${overdue} ${overdue === 1 ? 'просрочен' : 'просрочено'}`;
+  }
+</script>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDyPmcU4gYJPNp9N-xN1KHxXR9bPsn-x2I",
+    authDomain: "nikomi-a7429.firebaseapp.com",
+    projectId: "nikomi-a7429",
+    storageBucket: "nikomi-a7429.firebasestorage.app",
+    messagingSenderId: "845534967375",
+    appId: "1:845534967375:web:cf9085ce87c71d4d5d1c3a",
+    measurementId: "G-GWMMF7896E"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  let currentUser = null;
+
+  // Проверка авторизации
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = 'login.html';
+    } else {
+      currentUser = user;
+      loadProjects();
+    }
+  });
+
+  // Выход
+  document.querySelector('.sidebar-item[href="login.html"]').addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (confirm('Выйти из аккаунта?')) {
+      await signOut(auth);
+      window.location.href = 'login.html';
+    }
+  });
+
+  // API для работы с проектами
+  window.firestoreAPI = {
+    async createProject(data) {
+      const projectData = {
+        userId: currentUser.uid,
+        name: data.name,
+        description: data.description || '',
+        deadline: data.deadline || null,
+        createdAt: serverTimestamp(),
+        status: 'active'
+      };
+      const docRef = await addDoc(collection(db, 'projects'), projectData);
+      return docRef.id;
+    },
+
+    async getProjects() {
+      const q = query(
+        collection(db, 'projects'),
+        where('userId', '==', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+
+    async updateProject(projectId, data) {
+      const docRef = doc(db, 'projects', projectId);
+      await updateDoc(docRef, data);
+    },
+
+    async deleteProject(projectId) {
+      await deleteDoc(doc(db, 'projects', projectId));
+    },
+
+    async getTasksForProject(projectId) {
+      const q = query(
+        collection(db, 'tasks'),
+        where('projectId', '==', projectId)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+  };
+
+  // Загрузка проектов
+  async function loadProjects() {
+    try {
+      const projects = await window.firestoreAPI.getProjects();
+      const grid = document.getElementById('projectsGrid');
+      const addCard = document.getElementById('addCard');
+      
+      // Очистка
+      grid.querySelectorAll('.project-card[data-status]').forEach(c => c.remove());
+
+      if (projects.length === 0) {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('projectsGrid').style.display = 'none';
+        document.getElementById('projectStats').textContent = '0 проектов';
+        return;
+      }
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('projectsGrid').style.display = 'grid';
+
+      // Показать напоминания
+      await showReminders(projects);
+
+      for (const project of projects) {
+        const tasks = await window.firestoreAPI.getTasksForProject(project.id);
+        const totalTasks = tasks.length;
+        const doneTasks = tasks.filter(t => t.status === 'done').length;
+        const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+        let status = 'active';
+        let cardClass = '';
+        let deadlineText = 'Без срока';
+        let deadlineClass = 'meta-item';
+
+        if (project.deadline) {
+          const deadlineDate = new Date(project.deadline);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          deadlineDate.setHours(0, 0, 0, 0);
+          const diffDays = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+
+          deadlineText = 'до ' + deadlineDate.toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'});
+
+          if (diffDays < 0) {
+            status = 'overdue';
+            cardClass = 'danger';
+            deadlineClass = 'meta-item deadline-over';
+            deadlineText = '⚠️ Просрочен — ' + deadlineDate.toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'});
+          } else if (diffDays <= 7) {
+            cardClass = 'warn';
+            deadlineClass = 'meta-item deadline-soon';
+            deadlineText = '⏰ Скоро — ' + deadlineDate.toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'});
+          }
+        }
+
+        if (progress === 100) {
+          status = 'done';
+          cardClass = 'done';
+        }
+
+        const card = document.createElement('div');
+        card.className = `project-card animate-fadeUp ${cardClass}`;
+        card.dataset.status = status;
+        card.dataset.name = project.name;
+        card.dataset.projectId = project.id;
+        card.innerHTML = `
+          <div class="project-card-header">
+            <div class="project-name">📁 ${project.name}</div>
+            <div class="dropdown">
+              <button class="dots-btn" onclick="toggleDropdown(this)">⋯</button>
+              <div class="dropdown-menu">
+                <div class="dropdown-item" onclick="openEditModal('${project.id}')">✏️ Редактировать</div>
+                <div class="dropdown-item" onclick="window.location.href='tasks.html?project=${project.id}'">➕ Добавить задачу</div>
+                <div class="dropdown-item danger" onclick="deleteProject(this)">🗑 Удалить</div>
+              </div>
+            </div>
+          </div>
+          <p class="project-desc">${project.description || 'Описание не указано.'}</p>
+          <div class="project-meta">
+            <span class="meta-item">📋 ${totalTasks} ${totalTasks === 1 ? 'задача' : totalTasks < 5 ? 'задачи' : 'задач'}</span>
+            <span class="${deadlineClass}">📅 ${deadlineText}</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label"><span>Прогресс</span><span>${progress}%</span></div>
+            <div class="progress-bar"><div class="progress-fill ${cardClass === 'danger' ? 'danger' : cardClass === 'warn' ? 'warn' : progress === 100 ? 'success' : ''}" style="width:${progress}%"></div></div>
+          </div>
+          <div class="project-footer">
+            <div class="avatars">
+              <div class="avatar" style="background:#3AB0A8;">${currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'А'}</div>
+            </div>
+            <a href="tasks.html?project=${project.id}" class="btn-ghost btn-sm">Открыть →</a>
+          </div>
+        `;
+        grid.insertBefore(card, addCard);
+      }
+
+      updateStats();
+    } catch (err) {
+      console.error('Ошибка загрузки проектов:', err);
+      alert('Ошибка загрузки проектов: ' + err.message);
+    }
+  }
+
+  // Показать напоминания о просроченных/скоро истекающих проектах
+  async function showReminders(projects) {
+    const container = document.getElementById('alertsContainer');
+    container.innerHTML = '';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (const project of projects) {
+      if (!project.deadline) continue;
+
+      const deadlineDate = new Date(project.deadline);
+      deadlineDate.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+
+      let alertType = '';
+      let mascotImg = '';
+      let message = '';
+
+      if (diffDays < 0) {
+        alertType = 'error';
+        mascotImg = 'pers/angry.png';
+        message = `<strong>Дедлайн горит! 🔥</strong><br>Проект «${project.name}» просрочен. Срочно займись им!`;
+      } else if (diffDays === 0) {
+        alertType = 'warn';
+        mascotImg = 'pers/mangry.png';
+        message = `<strong>Эй, дедлайн сегодня! ⏰</strong><br>Проект «${project.name}» истекает сегодня. Давай быстрее!`;
+      } else if (diffDays <= 3) {
+        alertType = 'warn';
+        mascotImg = 'pers/mshok.png';
+        message = `<strong>Дедлайн совсем рядом! ⏰</strong><br>Проект «${project.name}» истекает через ${diffDays} ${diffDays === 1 ? 'день' : 'дня'}. Не забудь!`;
+      }
+
+      if (alertType) {
+        const alert = document.createElement('div');
+        alert.className = `notification ${alertType} deadline-alert animate-fadeUp`;
+        alert.innerHTML = `
+          <img src="${mascotImg}" alt="" class="notif-mascot-img">
+          <div class="notif-text">${message}</div>
+          <button onclick="this.closest('.notification').style.display='none'"
+            style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-secondary);flex-shrink:0;border-radius:50%;width:32px;height:32px;transition:all 0.3s;"
+            onmouseover="this.style.background='rgba(${alertType === 'error' ? '229,115,115' : '248,201,93'},0.1)';this.style.color='var(--${alertType === 'error' ? 'error' : 'warning'})'"
+            onmouseout="this.style.background='none';this.style.color='var(--text-secondary)'">✕</button>
+        `;
+        container.appendChild(alert);
+      }
+    }
+  }
+
+  window.loadProjects = loadProjects;
+</script>
+</body>
+</html>
