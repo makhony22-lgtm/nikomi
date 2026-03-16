@@ -150,7 +150,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged }
+  import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
@@ -166,29 +166,9 @@
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // Сначала проверяем редирект от Google, потом слушаем состояние
-  let redirectChecked = false;
-
-  getRedirectResult(auth).then((result) => {
-    redirectChecked = true;
-    if (result && result.user) {
-      window.location.href = 'dashboard.html';
-    }
-  }).catch((err) => {
-    redirectChecked = true;
-    if (err.code && err.code !== 'auth/no-current-user') {
-      console.error('❌ Ошибка редиректа:', err.code);
-      const errBox = document.getElementById('authError');
-      errBox.querySelector('#authErrorMsg').textContent = getFirebaseError(err.code);
-      errBox.style.display = 'flex';
-    }
-  });
-
-  // Редирект если уже залогинен (обычный вход по email или уже была сессия)
+  // Если уже залогинен — сразу на дашборд
   onAuthStateChanged(auth, (user) => {
-    if (user && redirectChecked) {
-      window.location.href = 'dashboard.html';
-    }
+    if (user) window.location.href = 'dashboard.html';
   });
 
   // ── Показать / скрыть пароль ──
@@ -270,9 +250,21 @@
   document.getElementById('googleBtn').addEventListener('click', async () => {
     const provider = new GoogleAuthProvider();
     const btn = document.getElementById('googleBtn');
+    const originalHTML = btn.innerHTML;
     btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="#4285F4" stroke-width="3" stroke-dasharray="30 60"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></circle></svg> Открываем Google...';
     btn.disabled = true;
-    await signInWithRedirect(auth, provider);
+    try {
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged перенаправит
+    } catch (err) {
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
+      if (err.code !== 'auth/popup-closed-by-user') {
+        const errBox = document.getElementById('authError');
+        errBox.querySelector('#authErrorMsg').textContent = getFirebaseError(err.code);
+        errBox.style.display = 'flex';
+      }
+    }
   });
 </script>
 
