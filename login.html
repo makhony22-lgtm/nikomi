@@ -197,12 +197,12 @@
   // ── Перевод ошибок Firebase ──
   function getFirebaseError(code) {
     const errors = {
-      'auth/user-not-found':      'Пользователь с таким email не найден.',
+      'auth/user-not-found':      'Аккаунт не найден. Сначала зарегистрируйся.',
       'auth/wrong-password':      'Неверный пароль. Попробуй ещё раз.',
       'auth/invalid-email':       'Некорректный формат email.',
       'auth/too-many-requests':   'Слишком много попыток. Подожди немного.',
       'auth/user-disabled':       'Аккаунт заблокирован.',
-      'auth/invalid-credential':  'Неверный email или пароль.',
+      'auth/invalid-credential':  'Неверный email или пароль. Если аккаунта нет — сначала зарегистрируйся.',
     };
     return errors[code] || 'Произошла ошибка. Попробуй снова.';
   }

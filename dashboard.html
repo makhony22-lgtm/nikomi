@@ -424,7 +424,8 @@
       window.location.href = 'login.html';
     } else {
       currentUser = user;
-      loadProjects();
+      // Небольшая задержка чтобы токен успел обновиться после Google Sign-In
+      setTimeout(() => loadProjects(), 300);
     }
   });
 
@@ -585,7 +586,10 @@
       updateStats();
     } catch (err) {
       console.error('Ошибка загрузки проектов:', err);
-      alert('Ошибка загрузки проектов: ' + err.message);
+      // Если нет прав — скорее всего сессия ещё не готова, просто показываем пустой экран
+      document.getElementById('projectStats').textContent = '0 проектов';
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('projectsGrid').style.display = 'none';
     }
   }
 
